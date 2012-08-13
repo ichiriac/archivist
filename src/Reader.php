@@ -171,8 +171,18 @@ class Reader
         if ( !is_dir($target) ) {
             mkdir($target, 0777, true);
         }
+        return $this->extractFileAs($name, $to.$name);
+    }
+    
+    /**
+     * Write the specified file to the specified target
+     * @param string $name
+     * @param string $to 
+     * @return Archive
+     */
+    public function extractFileAs( $name, $target ) {
         file_put_contents(
-            $to.$name,
+            $target,
             $this->getFile($name)
         );
         return $this;
