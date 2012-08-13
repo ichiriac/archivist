@@ -8,50 +8,14 @@
 
 require_once __DIR__ . '/../src/Reader.php';
 require_once __DIR__ . '/../src/Writer.php';
+require_once __DIR__ . '/../src/GetOpts.php';
 
 echo <<<EOT
 Archivist Builder Script - Version 0.1.0
 This script will help you to build php archives with the archivist boostrap.
 
-EOT;
 
-/**
- * Reads automatically arguments options
- * @return array 
- */
-function get_opts() {
-    $result = array();
-    $key = null;
-    $value = null;
-    $asize = count($_SERVER['argv']);
-    for( $i = 1; $i < $asize; $i++ ) {
-        $arg = $_SERVER['argv'][$i];
-        if ( $arg[0] === '-' ) {
-            if ( $key ) {
-                $result[ $key ] = is_null($value) ? false : $value;
-            }
-            $key = ltrim( $arg, '-' );
-            $value = null;
-        } else {
-            if ( $key ) {
-                if ( !$value ) {
-                    $value = $arg;
-                } else {
-                    if ( !is_array($value) ) {
-                        $value = array($value);
-                    }
-                    $value[] = $arg;
-                }
-            } else {
-                $result[] = $arg;
-            }
-        }
-    }
-    if ( $key ) {
-        $result[ $key ] = is_null($value) ? false : $value;
-    }
-    return $result;
-}
+EOT;
 
 $options = get_opts();
 
@@ -65,6 +29,8 @@ if ( !isset( $options['h'] ) ) {
     if ( 
         empty($options['e']) 
         && empty($options['d']) 
+        && empty($options['f']) 
+        && !isset($options['l']) 
     ) {
         echo "\n".'ERROR : The base-dir parameter is mandatory';
         $options = null;
@@ -89,6 +55,8 @@ Options :
     -d      Defines the base-path
     -c      Enables the compression
     -e      Extract files to the specified target
+    -f      Defines a list of files
+    -l      List all files included in the specified archive
 
 EOT;
     exit(0);
@@ -110,9 +78,18 @@ if ( isset($options['l']) ) {
     // create the archive
     $target = archivist\Writer::create( $options[0] );
 
+    if (empty( $options['d'])) $options['d'] = './';
     // add files
-    $it = new RecursiveDirectoryIterator( $options['d'] );
-    foreach(new RecursiveIteratorIterator($it) as $file) {
+    if ( empty( $options['f'] )) {
+        $options['f'] = array();
+        $it = new RecursiveDirectoryIterator( $options['d'] );
+        foreach(new RecursiveIteratorIterator($it) as $file) {
+            $options['f'] = $file;
+        }
+    } elseif ( is_string($options['f']) ) {
+        $options['f'] = array($options['f']);
+    }
+    foreach( $options['f'] as $file ) {
         if ( isset( $options['v'] )) {
             echo 'Adding : ' . $file . "\n";
         }
