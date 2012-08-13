@@ -136,18 +136,28 @@ class Writer extends Reader
             $this->bootstrap .= '<?php ';
         }
         $tsize = count( $tokens );
+        $namespace = false;
         for( $offset = 1; $offset < $tsize; $offset ++ ) {
             $token = $tokens[ $offset ];
-            if ( $compressed ) {
-                if ( $token[0] === T_COMMENT || $token[0] === T_DOC_COMMENT) {
-                    continue;
-                }
-                if ( $token[0] === T_WHITESPACE ) {
-                    $this->bootstrap .= ' ';
-                    continue;
-                }
+            if ( $token[0] === T_NAMESPACE ) {
+                $namespace = true;
             }
-            $this->bootstrap .= is_array( $token ) ? $token[1] : $token;
+            if ( $namespace ) {
+                if ( $token[0] === ';' ) {
+                    $namespace = false;
+                }
+            } else {
+                if ( $compressed ) {
+                    if ( $token[0] === T_COMMENT || $token[0] === T_DOC_COMMENT) {
+                        continue;
+                    }
+                    if ( $token[0] === T_WHITESPACE ) {
+                        $this->bootstrap .= ' ';
+                        continue;
+                    }
+                }
+                $this->bootstrap .= is_array( $token ) ? $token[1] : $token;
+            }
         }
         return $this;
     }
